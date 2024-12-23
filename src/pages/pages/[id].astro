@@ -1,0 +1,26 @@
+---
+import {getImages} from "../../utils";
+export async function getStaticPaths() {
+
+    const images = await getImages();
+
+    return images.map((image, n) => (
+        {
+            params: {id: n + 1}, props: {
+                image,
+                current: n,
+                total: images.length,
+            }
+        }
+    ));
+}
+
+const {image, current, total} = Astro.props;
+---
+
+<img
+        width="220"
+        src={image.src}
+/>
+
+<div class="bg-red">{current} / {total}</div>
