@@ -2,18 +2,25 @@ import TF2Logo from "./assets/tf_logo.png";
 import Title from "./assets/title.png";
 import "./index.css";
 import {useEffect, useMemo, useState} from "react";
-import {comicImageUrl, parseHash} from "./helpers.ts";
+import {comicImageUrl, parseHash, range} from "./helpers.ts";
 import {useLocation} from "react-router-dom";
 import {useKeyPress} from "./useKeyPress.ts";
 
 import.meta.glob("./assets/pages/*.png");
 
+const PRELOAD_AHEAD = 4;
+const TOTAL_PAGES = 330;
+
 function App() {
     const {hash} = useLocation();
 
+    const [loaded, setLoaded] = useState(false)
     const [currentPage, setCurrentPage] = useState(1);
     const currentImageUrl = useMemo(() => comicImageUrl(currentPage), [currentPage]);
-    const nextImageUrl = useMemo(() => comicImageUrl(currentPage + 1), [currentPage]);
+    const preloadImageUrls = useMemo(
+        () => range(0, PRELOAD_AHEAD).map(n => comicImageUrl(currentPage + n)).filter(url => !!url),
+        [currentPage]
+    );
 
     const nextPage = () => {
         gotoPageHash(currentPage + 1);
@@ -29,12 +36,13 @@ function App() {
 
     useEffect(() => {
         const page = parseHash(hash);
-        if (page < 1 || page > 330) {
+        if (page < 1 || page > TOTAL_PAGES) {
             gotoPageHash(currentPage);
             return;
         }
 
         setCurrentPage(page);
+        setLoaded(true);
     }, [hash]);
 
     useKeyPress(nextPage, [' ', 'ArrowRight', 'Enter'])
@@ -47,19 +55,25 @@ function App() {
                 <img src={Title} alt="The Days Have Worn Away"/>
             </div>
             <div className="h-[48rem] w-full overflow-hidden" onClick={nextPage}>
-                {currentImageUrl && (
-                    <img
-                        className="object-contain w-full h-full cursor-pointer"
-                        alt="Comic Reader"
-                        src={currentImageUrl}
-                    />
-                )}
-                {nextImageUrl && (
-                    <img
-                        alt="Hidden Preload"
-                        src={nextImageUrl}
-                        className="w-0 h-0"
-                    />
+                {loaded && (
+                    <>
+                        {currentImageUrl && (
+                            <img
+                                className="object-contain w-full h-full cursor-pointer"
+                                alt="Comic Reader"
+                                src={currentImageUrl}
+                            />
+                        )}
+
+                        {preloadImageUrls.map((url, index) => (
+                            <img
+                                key={index}
+                                alt="Hidden Preload"
+                                className="w-0 h-0"
+                                src={url}
+                            />
+                        ))}
+                    </>
                 )}
             </div>
 
