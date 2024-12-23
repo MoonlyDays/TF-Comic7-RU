@@ -1,4 +1,5 @@
 ---
+import {Image} from 'astro:assets';
 import {getImages} from "../../utils";
 export async function getStaticPaths() {
 
@@ -18,9 +19,10 @@ export async function getStaticPaths() {
 const {image, current, total} = Astro.props;
 ---
 
-<img
-        width="220"
-        src={image.src}
-/>
-
-<div class="bg-red">{current} / {total}</div>
+<body class="bg-[url('/src/assets/main_bg.jpg')] bg-top bg-[#161514] bg-no-repeat flex justify-center">
+<div class="max-w-5xl pt-28">
+    <a href={"/pages/" + (current + 2)}>
+        <Image src={image} alt="Comic Page"/>
+    </a>
+</div>
+</body>
