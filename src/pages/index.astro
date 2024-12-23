@@ -71,11 +71,13 @@ import Title from "../assets/title.png";
         }
     }
 
+    const pageToImagePath = (page: number) => {
+        return `/src/comic/${page + 1}.png`;
+    }
+
     const handleHashChange = async () => {
         const page = location.hash ? Number(location.hash.slice(1)) : 1;
-
-        const name = String(page).padStart(3, '0');
-        const path = `/src/comic/${name}.png`;
+        const path = pageToImagePath(page);
 
         try {
             const image = await resolveImage(path);
@@ -98,7 +100,11 @@ import Title from "../assets/title.png";
     }
 
     const changePage = async (page: number) => {
-        if (page <= 0 || page >= imagesCount) page = 1;
+        if (page <= 0) page = 1;
+        if (page > imagesCount) {
+            return;
+        }
+
         location.hash = `#${page}`;
     }
 
