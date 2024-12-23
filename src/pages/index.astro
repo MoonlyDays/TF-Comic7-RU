@@ -1,50 +1,104 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import {ImageMetadata} from "astro";
+import {Image} from "astro:assets";
+
+import TF2Logo from "../assets/tf_logo.png";
+import Title from "../assets/title.png";
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+<head>
+    <meta name="viewport" content="width=1024, initial-scale=1"/>
+    <meta charset="utf-8"/>
+    <title>Комикс Team Fortress 2 #7 на русском</title>
+</head>
+<body class="bg-[url('/src/assets/main_bg.jpg')] bg-top bg-[#161514] bg-no-repeat flex justify-center">
+<div class="max-w-5xl w-full">
+    <div class="flex justify-between h-28 items-center">
+        <Image src={TF2Logo} alt="Team Fortress 2 Logo"/>
+        <Image src={Title} alt="The Days Have Worn Away"/>
+    </div>
+    <img id="reader" class="cursor-pointer hidden w-full" alt="Comic Reader" src=""/>
+    <div class="flex mt-8 mb-16 gap-8 flex-col items-center text-white">
+        <div class="bg-[url('/src/assets/infobar.png')] font-sans text-xl w-[600px] h-[72px] flex justify-center items-center">
+            Жмите на картинку или на пробел для перехода дальше
+        </div>
+        <div class="text-center">
+            <p>Оригинал: <a href="https://www.teamfortress.com/tf07_thedayshavewornaway/" class="text-amber-500">teamfortress.com/tf07_thedayshavewornaway</a>
+            </p>
+            <p>Автор перевода: <b>Алиса</b></p>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    const images = import.meta.glob('/src/comic/*.png');
+    const imagesCount = Object.values(images).length;
+    const reader = document.querySelector('#reader');
+    let currentPage = 1;
+
+    const prevPage = () => {
+        changePage(currentPage - 1);
+    }
+
+    const nextPage = () => {
+        changePage(currentPage + 1);
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+
+        switch (event.key) {
+            case "ArrowRight":
+            case " ":
+            case "Enter":
+                event.preventDefault();
+                nextPage();
+                break;
+
+            case "ArrowLeft":
+                event.preventDefault();
+                prevPage();
+                break;
+
+            default:
+                // console.log(`Unhandled key code: ${event.key}`);
+                break;
+        }
+    }
+
+    const handleHashChange = async () => {
+        const page = location.hash ? Number(location.hash.slice(1)) : 1;
+
+        const name = String(page).padStart(3, '0');
+        const path = `/src/comic/${name}.png`;
+
+        try {
+            const image = await resolveImage(path);
+            reader?.setAttribute('src', image.src);
+            reader?.classList.remove('hidden');
+            currentPage = page;
+        } catch (e) {
+            changePage(currentPage).then();
+        }
+    }
+
+    const resolveImage = async (path: string) => {
+        const resolve = images[path];
+        if (!resolve) {
+            throw Error('Image not found!');
+        }
+
+        const module = (typeof resolve == "function" ? await resolve() : resolve) as { default: ImageMetadata };
+        return module.default;
+    }
+
+    const changePage = async (page: number) => {
+        if (page <= 0 || page >= imagesCount) page = 1;
+        location.hash = `#${page}`;
+    }
+
+    reader?.addEventListener('click', nextPage);
+    window.addEventListener('DOMContentLoaded', handleHashChange)
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('keydown', handleKeyDown);
+</script>
