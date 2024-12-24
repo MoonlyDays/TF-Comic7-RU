@@ -86,7 +86,7 @@ function App() {
                     <>
                         <Transition show={imageLoading}>
                             <div
-                                className="absolute z-10 duration-400 transition w-full h-full pointer-events-none bg-black bg-black/60 data-closed:bg-transparent flex justify-center items-center">
+                                className="absolute z-10 duration-400 transition w-full h-full pointer-events-none bg-black bg-black/40 data-closed:bg-transparent flex justify-center items-center">
                                 <AiOutlineLoading3Quarters
                                     className={"text-6xl text-white transition-opacity animate-spin " + (loadingVisible ? '' : 'opacity-0')}/>
                             </div>
