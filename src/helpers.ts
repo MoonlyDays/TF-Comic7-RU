@@ -1,5 +1,5 @@
 export function comicImageUrl(page: number) {
-    const href = new URL(`./assets/pages/${page + 1}.png`, import.meta.url).href;
+    const href = new URL(`./assets/pages/${page}.png`, import.meta.url).href;
     return href.endsWith('/undefined') ? undefined : href;
 }
 
