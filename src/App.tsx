@@ -36,6 +36,12 @@ function App() {
     }
 
     const gotoPageHash = (page: number) => {
+
+        // We're already loading.
+        if (imageLoading) {
+            return;
+        }
+
         location.hash = `#${page}`;
     }
 
