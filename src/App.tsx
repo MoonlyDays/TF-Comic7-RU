@@ -5,6 +5,7 @@ import {useEffect, useMemo, useState} from "react";
 import {comicImageUrl, parseHash, range} from "./helpers.ts";
 import {useLocation} from "react-router-dom";
 import {useKeyPress} from "./useKeyPress.ts";
+import {Transition} from "@headlessui/react";
 
 import.meta.glob("./assets/pages/*.png");
 
@@ -14,7 +15,8 @@ const TOTAL_PAGES = 330;
 function App() {
     const {hash} = useLocation();
 
-    const [loaded, setLoaded] = useState(false)
+    const [initialLoading, setInitialLoading] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const currentImageUrl = useMemo(() => comicImageUrl(currentPage), [currentPage]);
     const preloadImageUrls = useMemo(
@@ -42,8 +44,13 @@ function App() {
         }
 
         setCurrentPage(page);
-        setLoaded(true);
+        setInitialLoading(true);
+        setImageLoading(true);
     }, [hash]);
+
+    const handleLoaded = () => {
+        setImageLoading(false);
+    }
 
     useKeyPress(nextPage, [' ', 'ArrowRight', 'Enter'])
     useKeyPress(prevPage, ['ArrowLeft'])
@@ -54,11 +61,17 @@ function App() {
                 <img src={TF2Logo} alt="Team Fortress 2 Logo"/>
                 <img src={Title} alt="The Days Have Worn Away"/>
             </div>
-            <div className="h-[48rem] w-full overflow-hidden" onClick={nextPage}>
-                {loaded && (
+            <div className="h-[48rem] w-full overflow-hidden relative" onClick={nextPage}>
+                {initialLoading && (
                     <>
+                        <Transition show={imageLoading}>
+                            <div
+                                className="absolute z-10 duration-200 transition-colors w-full h-full pointer-events-none bg-black/50 data-closed:bg-transparent"/>
+                        </Transition>
+
                         {currentImageUrl && (
                             <img
+                                onLoad={handleLoaded}
                                 className="object-contain w-full h-full cursor-pointer"
                                 alt="Comic Reader"
                                 src={currentImageUrl}
