@@ -1,11 +1,12 @@
 import TF2Logo from "./assets/tf_logo.png";
 import Title from "./assets/title.png";
 import "./index.css";
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {comicImageUrl, parseHash, range} from "./helpers.ts";
 import {useLocation} from "react-router-dom";
 import {useKeyPress} from "./useKeyPress.ts";
 import {Transition} from "@headlessui/react";
+import {AiOutlineLoading3Quarters} from "react-icons/ai";
 
 import.meta.glob("./assets/pages/*.png");
 
@@ -18,6 +19,8 @@ function App() {
     const [initialLoading, setInitialLoading] = useState(false);
     const [imageLoading, setImageLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [loadingVisible, setLoadingVisible] = useState(false);
+    const loadingVisibleTimeout = useRef<number>();
     const currentImageUrl = useMemo(() => comicImageUrl(currentPage), [currentPage]);
     const preloadImageUrls = useMemo(
         () => range(0, PRELOAD_AHEAD).map(n => comicImageUrl(currentPage + n)).filter(url => !!url),
@@ -46,10 +49,21 @@ function App() {
         setCurrentPage(page);
         setInitialLoading(true);
         setImageLoading(true);
+        setLoadingVisible(false);
+
+        loadingVisibleTimeout.current = setTimeout(() => {
+            setLoadingVisible(true);
+        }, 500)
     }, [hash]);
 
     const handleLoaded = () => {
         setImageLoading(false);
+        setLoadingVisible(false);
+
+        if (loadingVisibleTimeout.current) {
+            clearInterval(loadingVisibleTimeout.current);
+            loadingVisibleTimeout.current = undefined;
+        }
     }
 
     useKeyPress(nextPage, [' ', 'ArrowRight', 'Enter'])
@@ -66,7 +80,10 @@ function App() {
                     <>
                         <Transition show={imageLoading}>
                             <div
-                                className="absolute z-10 duration-200 transition-colors w-full h-full pointer-events-none bg-black/50 data-closed:bg-transparent"/>
+                                className="absolute z-10 duration-400 transition w-full h-full pointer-events-none bg-black bg-black/60 data-closed:bg-transparent flex justify-center items-center">
+                                <AiOutlineLoading3Quarters
+                                    className={"text-6xl text-white transition-opacity animate-spin " + (loadingVisible ? '' : 'opacity-0')}/>
+                            </div>
                         </Transition>
 
                         {currentImageUrl && (
