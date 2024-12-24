@@ -1,7 +1,7 @@
 import TF2Logo from "./assets/tf_logo.png";
 import Title from "./assets/title.png";
 import "./index.css";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {comicImageUrl, parseHash, range} from "./helpers.ts";
 import {useLocation} from "react-router-dom";
 import {useKeyPress} from "./useKeyPress.ts";
@@ -16,16 +16,14 @@ const TOTAL_PAGES = 330;
 function App() {
     const {hash} = useLocation();
 
-    const [initialLoading, setInitialLoading] = useState(false);
-    const [imageLoading, setImageLoading] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [loadingVisible, setLoadingVisible] = useState(false);
     const loadingVisibleTimeout = useRef<number>();
-    const currentImageUrl = useMemo(() => comicImageUrl(currentPage), [currentPage]);
-    const preloadImageUrls = useMemo(
-        () => range(0, PRELOAD_AHEAD).map(n => comicImageUrl(currentPage + n)).filter(url => !!url),
-        [currentPage]
-    );
+    const [initialLoading, setInitialLoading] = useState(false);
+    const [loadingVisible, setLoadingVisible] = useState(false);
+    const [imageLoading, setImageLoading] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string>();
+    const [preloadImageUrls, setPreloadImageUrls] = useState<string[]>();
 
     const nextPage = () => {
         gotoPageHash(currentPage + 1);
@@ -36,12 +34,10 @@ function App() {
     }
 
     const gotoPageHash = (page: number) => {
+        if (page < 1) page = 1;
+        if (page > TOTAL_PAGES) page = TOTAL_PAGES;
 
-        // We're already loading.
-        if (imageLoading) {
-            return;
-        }
-
+        console.log(`going to ${page}`);
         location.hash = `#${page}`;
     }
 
@@ -54,13 +50,22 @@ function App() {
 
         setCurrentPage(page);
         setInitialLoading(true);
+    }, [hash]);
+
+    useEffect(() => {
         setImageLoading(true);
         setLoadingVisible(false);
 
         loadingVisibleTimeout.current = setTimeout(() => {
             setLoadingVisible(true);
         }, 500)
-    }, [hash]);
+
+        setCurrentImageUrl(comicImageUrl(currentPage));
+        const preloadImages = range(0, PRELOAD_AHEAD)
+            .map(n => comicImageUrl(currentPage + n))
+            .filter(url => url !== undefined) as string[];
+        setPreloadImageUrls(preloadImages);
+    }, [currentPage]);
 
     const handleLoaded = () => {
         setImageLoading(false);
@@ -101,7 +106,7 @@ function App() {
                             />
                         )}
 
-                        {preloadImageUrls.map((url, index) => (
+                        {preloadImageUrls && preloadImageUrls.map((url, index) => (
                             <img
                                 key={index}
                                 alt="Hidden Preload"
